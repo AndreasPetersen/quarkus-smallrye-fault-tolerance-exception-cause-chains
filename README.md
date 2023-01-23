@@ -1,1 +1,1 @@
-# quarkus-smallrye-fault-tolerance-exception-cause-chains
+Reproduces an issue where SmallRye Fault Tolerance `@Retry` does not check the exception cause chain
