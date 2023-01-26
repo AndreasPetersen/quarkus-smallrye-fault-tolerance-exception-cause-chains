@@ -13,9 +13,10 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 
 @QuarkusTest
-class GreetingResourceTest {
+class ResourceTest {
     @ConfigProperty(name = "port")
     int port;
+    UrlPattern url = WireMock.urlEqualTo("/notFound");
 
     WireMockServer wireMockServer;
 
@@ -23,22 +24,30 @@ class GreetingResourceTest {
     void beforeEach() {
         wireMockServer = new WireMockServer(port);
         wireMockServer.start();
+        wireMockServer.stubFor(WireMock.get(url)
+                .willReturn(WireMock.aResponse().withStatus(HttpURLConnection.HTTP_NOT_FOUND)));
     }
 
     @AfterEach
     void afterEach() {
+        wireMockServer.resetAll();
         wireMockServer.stop();
     }
 
     @Test
-    void testHelloEndpoint() {
-        UrlPattern url = WireMock.urlEqualTo("/notFound");
-        wireMockServer.stubFor(WireMock.get(url)
-                .willReturn(WireMock.aResponse().withStatus(HttpURLConnection.HTTP_NOT_FOUND)));
-
+    void async() {
         given()
-            .when().get("/hello")
+            .when().get("/async")
             .then().statusCode(HttpURLConnection.HTTP_INTERNAL_ERROR);
+
+        wireMockServer.verify(1, WireMock.getRequestedFor(url));
+    }
+
+    @Test
+    void sync() {
+        given()
+                .when().get("/sync")
+                .then().statusCode(HttpURLConnection.HTTP_INTERNAL_ERROR);
 
         wireMockServer.verify(1, WireMock.getRequestedFor(url));
     }
